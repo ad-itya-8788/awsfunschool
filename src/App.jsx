@@ -1,25 +1,33 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 
+// Mandatory Disclosure dropdown: [label shown, PDF file name inside public/pdf/]
+// File names match the files in your public/pdf folder exactly.
 const disclosureFiles = [
-  ["Public Disclosure", "AWS-HB-MergedPublicDisclosure.pdf"],
-  ["Academic Calendar 2025-26", "AWS-HB-AcademicCalendar2025-26.pdf"],
-  ["Fee Structure", "AWS-HB-FeeStructure.pdf"],
-  ["Building Safety", "AWS-HB-MergedBuildingSafety.pdf"],
-  ["Fire Safety", "AWS-HB-New-FireSafety.pdf"],
-  ["PTA", "AWS-HB-PTA-G.pdf"],
-  ["Certificate of Land", "CertificateofLand300Dpi.pdf"],
-  ["List of Staff", "ListofStaff-25.pdf"],
-  ["NOC", "NOC-300dpi.pdf"],
-  ["RR", "newRR.pdf"],
-  ["Trust deed", "Trustdeed300dpi.pdf"],
+  ["Building Safety Certificate", "Buildingsafetycertificate.pdf"],
+  ["Fire Safety Certificate", "Firesafetycertificate.pdf"],
+  ["Recognition Certificate", "RECOGNITION_CERTIFICATE.pdf"],
+  ["NOC", "schoolAcknowledgmentNOC.pdf"],
+  ["Society Certificate", "SocityCertificate.pdf"],
+  ["Water & Sanitisation Report", "watersanitisationreport.pdf"],
   ["Water Testing Report", "WaterTestingReport.pdf"],
-  ["Land Certificate", "AWSHBMergedLandCertificate.pdf"],
-  ["Health & Sanitation", "MergedHealthSanitation.pdf"],
-  ["Parents Teachers Association", "PARENTS-TECAHERS-ASSOCIATION-1.pdf"],
-  ["School Managing Committee", "SCHOOL-MANAGING-COMMITTEE-1.pdf"],
-  ["Self Certification", "self-certification.pdf"],
-  ["Mandatory Disclosure", "mandatoryDisclosure.pdf"],
+  ["Fee Structure", "Feestructure.pdf"],
+  ["PTA", "PTA.pdf"],
+  ["Public Disclosure", "publicdiscloure.pdf"],
+  ["SMC", "SMC.pdf"],
+  ["Teacher List", "Teacherlist.pdf"],
+  ["Academic Calendar", "AcademicCalendar.pdf"],
+  ["Certification Proforma", "Certificate.pdf"],
+  ["Mandatory Disclosure", "MandatoryDisclosure.pdf"],
+];
+
+// Menu order: Home, About Us, Mandatory Disclosure (dropdown), Our Features, Gallery, Contact Us
+const navLinks = [
+  ["home", "Home"],
+  ["aboutus", "About Us"],
+  ["ourFeatures", "Our Features"],
+  ["meetOurTeam", "Gallery"],
+  ["contact", "Contact Us"],
 ];
 
 const aboutTabs = [
@@ -57,27 +65,62 @@ const features = [
   "Methodology Workshops",
 ];
 
-  const galleryImages = ["G_1.jpeg", "G_2.jpeg", "G_3.jpeg"];
+const galleryImages = ["G_1.jpeg", "G_2.jpeg", "G_3.jpeg"];
+
+
+const CubeIcon = () => (
+  <>
+    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+    <line x1="12" y1="22.08" x2="12" y2="12" />
+  </>
+);
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [disclosureOpen, setDisclosureOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("vision");
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [activeSection, setActiveSection] = useState("home");
+  const [scrolled, setScrolled] = useState(false); // header turns white
+  const [showTop, setShowTop] = useState(false); // back-to-top button
 
   const activeAbout = aboutTabs.find((tab) => tab.id === activeTab) || aboutTabs[0];
+
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY + 120;
+      let current = "home";
+      navLinks.forEach(([id]) => {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= y) current = id;
+      });
+      setActiveSection(current);
+      setScrolled(window.scrollY > 10);
+      setShowTop(window.scrollY > 300);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const closeMenu = () => {
     setMenuOpen(false);
     setDisclosureOpen(false);
   };
 
+  const renderLink = ([id, label]) => (
+    <a key={id} href={`#${id}`} className={activeSection === id ? "active" : ""} onClick={closeMenu}>
+      {label}
+    </a>
+  );
+
   return (
     <div className="site-shell">
-      <header className="site-header">
+      <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
         <div className="nav-wrap">
-          <a className="brand" href="#home" onClick={closeMenu} aria-label="Aaryans World School home">
-            <img src="/images/aaryanfunschoollogo.jpeg" alt="Aaryans World School logo" />
+          <a className="brand" href="#home" onClick={closeMenu} aria-label="Aaryans Fun School home">
+            <img src="/images/aaryanfunschoollogo.jpeg" alt="Aaryans Fun School logo" />
           </a>
 
           <button
@@ -93,11 +136,7 @@ function App() {
           </button>
 
           <nav className={`main-nav ${menuOpen ? "is-open" : ""}`} aria-label="Navigation Menu">
-            <a href="#home" onClick={closeMenu}>Home</a>
-            <a href="#aboutus" onClick={closeMenu}>About Us</a>
-            <a href="#ourFeatures" onClick={closeMenu}>Our Features</a>
-            <a href="#meetOurTeam" onClick={closeMenu}>Gallery</a>
-            <a href="#contact" onClick={closeMenu}>Contact Us</a>
+            {navLinks.slice(0, 2).map(renderLink)}
             <div className="disclosure-menu">
               <button
                 type="button"
@@ -109,26 +148,31 @@ function App() {
               </button>
               <div className={`disclosure-list ${disclosureOpen ? "is-open" : ""}`}>
                 {disclosureFiles.map(([label, file]) => (
-                  <a key={file} href={`/pdf/${file}`} rel="noreferrer" onClick={closeMenu}>
+                  <a
+                    key={file}
+                    href={`/pdf/${file}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={closeMenu}
+                  >
                     {label}
                   </a>
                 ))}
               </div>
             </div>
+            {navLinks.slice(2).map(renderLink)}
           </nav>
         </div>
       </header>
 
       <main>
-        <section className="hero section-pad" id="home">
+        <section className="hero" id="home">
           <div className="container hero-grid">
             <div className="hero-copy">
-              <span className="eyebrow">Learn • Grow • Shine</span>
               <h1 className="hero-title">
                 <span className="hero-title-main">Aaryans World School</span>
-                <span className="hero-title-location">Belagavi</span>
+                <span className="hero-title-location">Belgavi</span>
               </h1>
-              <p>Inspiring young minds through quality education, creativity, co-curricular activities and strong values.</p>
               <a className="primary-button" href="#contact">Contact Us <span aria-hidden="true">›</span></a>
             </div>
             <div className="hero-art">
@@ -154,18 +198,15 @@ function App() {
                     className={activeTab === tab.id ? "about-tab active" : "about-tab"}
                     onClick={() => setActiveTab(tab.id)}
                   >
-                    <span>{tab.label}</span>
-                    <small>{tab.title}</small>
+                    {tab.label}
                   </button>
                 ))}
               </div>
               <article className="about-panel" role="tabpanel">
                 <img src={`/images/${activeAbout.image}`} alt={activeAbout.title} />
-                <div>
-                  <span className="eyebrow">Our purpose</span>
-                  <h3>{activeAbout.title}</h3>
-                  <p>{activeAbout.text}</p>
-                </div>
+                <h3>{activeAbout.title}</h3>
+                <p>{activeAbout.text}</p>
+                <span className="about-more" aria-hidden="true">›</span>
               </article>
             </div>
           </div>
@@ -178,8 +219,7 @@ function App() {
             </div>
             <div className="leader-copy">
               <span className="eyebrow">Director Desk</span>
-              <h2>“Excellence is a continuous process and not an accident.”</h2>
-              <p className="quote-credit">— Dr. A. P. J. Abdul Kalam</p>
+              <h2>“Excellence is a continuous process and not an accident.” – Dr. A. P. J. Abdul Kalam</h2>
               <p>I feel privileged to be the Director of such an excellent and vibrant school, which offers great opportunities for its students. It is our goal to help each and every student succeed.</p>
               <p>Aaryans World School was established with a passion for providing high-quality education, with equal importance given to co-curricular activities. Our carefully designed curriculum helps children meet global standards while developing a sense of social responsibility towards society and the nation.</p>
               <p>We view education as the development of the whole child. Along with intellectual growth, we focus on students’ physical, social and personal development. We offer students opportunities to become confident, thoughtful young people who are prepared for future responsibilities.</p>
@@ -196,7 +236,6 @@ function App() {
             <div className="leader-copy">
               <span className="eyebrow">Director Panel</span>
               <h2>“Education is the kindling of a flame, not the filling of a vessel.”</h2>
-              <p className="quote-credit">— Often attributed to Socrates</p>
               <p>Keeping this thought in mind, Aaryans World School brings together competent teachers, child-centred infrastructure and experienced administration. We strive to create a safe, supportive environment that balances academics, sports, artistic expression and social opportunities. Childhood and learning should be joyful, and we work to make that possible.</p>
               <p>Our commitment to students’ emotional growth goes hand in hand with intellectual excellence. Through experiential learning, students develop self-esteem, self-awareness and confidence. Sharing ideas, analysing situations and expressing themselves clearly are important skills we encourage every day.</p>
               <p>“Educating the mind without educating the heart is no education at all.” — Aristotle</p>
@@ -216,11 +255,12 @@ function App() {
             <div className="feature-grid">
               {features.map((feature) => (
                 <article className="feature-card" key={feature}>
+                  <svg className="feature-watermark" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <CubeIcon />
+                  </svg>
                   <div className="feature-icon" aria-hidden="true">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.73z" />
-                      <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                      <line x1="12" y1="22.08" x2="12" y2="12" />
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                      <CubeIcon />
                     </svg>
                   </div>
                   <h3>{feature}</h3>
@@ -244,7 +284,7 @@ function App() {
                   aria-label={`Open gallery image ${index + 1}`}
                   onClick={() => setLightboxImage(image)}
                 >
-                  <img src={`/images/${image}`} alt={`Aaryans World School gallery ${index + 1}`} />
+                  <img src={`/images/${image}`} alt={`Aaryans Fun School gallery ${index + 1}`} />
                 </button>
               ))}
             </div>
@@ -253,16 +293,19 @@ function App() {
 
         <section className="section-pad contact-section" id="contact">
           <div className="container">
-            <h2>Contact Us</h2>
+            <div className="section-heading">
+              <h2>Contact Us</h2>
+            </div>
             <div className="contact-grid">
               <div className="contact-photo">
                 <img src="/images/contact_us.jpeg" alt="Students participating in a school activity" />
               </div>
               <div className="contact-card">
-                <span className="eyebrow">Get in touch</span>
                 <h3>Aaryans Fun School</h3>
-                <p><strong>Address:</strong> Near Laxmi Complex, beside Iyengar Bakery, opposite Dr. Baliga Hospital, 2nd Cross, Main Road, Sadashiv Nagar, Belagavi.</p>
-                <p className="contact-mob"><strong>Mobile:</strong> <a href="tel:8496034488">84960 34488</a> / <a href="tel:8497034488">84970 34488</a></p>
+                <p>Address: Near Laxmi Complex, beside Iyengar Bakery, opposite Dr. Baliga Hospital, 2nd Cross, Main Road, Sadashiv Nagar, Belagavi.</p>
+                <p className="contact-mob">
+                  Mob. <a href="tel:8496034488">84960 34488</a> / <a href="tel:8497034488">84970 34488</a>
+                </p>
               </div>
             </div>
           </div>
@@ -272,14 +315,27 @@ function App() {
       <footer className="site-footer">
         <div className="container footer-inner">
           <p>
-            © {new Date().getFullYear()} Aaryans World School, Belagavi. Design with{" "}
-            <a href="https://www.aayojanai.com/" target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", fontWeight: "600" }}>
+            © {new Date().getFullYear()}. Design with{" "}
+            <a
+              href="https://www.aayojanai.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ textDecoration: "none", fontWeight: "600" }}
+            >
               Aayojan AI
-            </a>{" "}❤️
+            </a>
+            <span className="footer-heart">♥</span> by aaryansfunschool.
           </p>
-          <a className="footer-top" href="#home" aria-label="Back to top">↑</a>
         </div>
       </footer>
+
+      <a
+        href="#home"
+        className={`scroll-top ${showTop ? "visible" : ""}`}
+        aria-label="Scroll to top"
+      >
+        ↑
+      </a>
 
       {lightboxImage && (
         <div className="lightbox" role="dialog" aria-modal="true" aria-label="Gallery image viewer" onClick={() => setLightboxImage(null)}>
@@ -287,6 +343,7 @@ function App() {
           <img src={`/images/${lightboxImage}`} alt="School gallery enlarged" onClick={(event) => event.stopPropagation()} />
         </div>
       )}
+
     </div>
   );
 }
